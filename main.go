@@ -4,26 +4,25 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/table"
 )
+
+const TODO_LIST_FILE = "tasks.csv"
+const TIME_FORMAT = time.RFC850
 
 func main() {
 	printMainHeader()
 
-	tasks := askForInput()
+	list := List{}
+	list.tasks = GetTaskFromFile()
 
-	printMainHeader()
+	askForInput(&list)
+	printTasksTable(list.tasks)
 
-	printTasksTable(tasks)
-}
-
-type Task struct {
-	id         int
-	name       string
-	created_at string
-	is_done    bool
+	list.Save()
 }
 
 func printMainHeader() {
@@ -49,13 +48,12 @@ func askIfDone() bool {
 	return true
 }
 
-func askForInput() []Task {
-	tasks := []Task{}
+func askForInput(list *List) {
 	reader := bufio.NewReader(os.Stdin)
 
 	done := false
 
-	i := 1
+	i := list.GetLastID() + 1
 	for {
 		if done {
 			break
@@ -63,19 +61,18 @@ func askForInput() []Task {
 
 		println("Enter a new task:")
 		input, _ := reader.ReadString('\n')
+		input = strings.TrimRight(input, "\n")
 
-		currentTime := time.Now().Format(time.RFC850)
+		currentTime := time.Now().Format(TIME_FORMAT)
 
 		newTask := Task{i, input, currentTime, false}
 
-		tasks = append(tasks, newTask)
+		list.Add(newTask)
 
 		done = askIfDone()
 
 		i++
 	}
-
-	return tasks
 }
 
 func printTasksTable(tasks []Task) {
@@ -86,16 +83,11 @@ func printTasksTable(tasks []Task) {
 	for _, task := range tasks {
 		status := "Pending"
 
-		if task.is_done {
+		if task.isDone {
 			status = "Done"
 		}
 
-		t.AppendRow(table.Row{
-			task.id,
-			task.name,
-			task.created_at,
-			status,
-		})
+		t.AppendRow(table.Row{task.id, task.name, task.createdAt, status})
 	}
 
 	t.Render()
