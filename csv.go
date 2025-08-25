@@ -7,12 +7,22 @@ import (
 	"os"
 )
 
-func ReadAndParseCSV(filename string) [][]string {
+func ReadAndParseCSV(filename string) CSV {
 	csvData := readCSVFile(filename)
 
 	data := parseCSV(csvData)
 
-	return data
+	// Transform matrix to CSV object
+	csv := CSV{}
+	csv.SetHeader(ToRow(data[0]))
+
+	if len(data) > 0 {
+		for i := 1; i < len(data); i++ {
+			csv.AppendRow(ToRow(data[i]))
+		}
+	}
+
+	return csv
 }
 
 // Read CSV file
@@ -59,4 +69,32 @@ func parseCSV(data []byte) [][]string {
 	records := Must(reader.ReadAll())
 
 	return records
+}
+
+// ---- CSV Struct stuff ----
+
+type CSV struct {
+	header Row
+	rows   []Row
+}
+
+type Row struct {
+	columns []string
+}
+
+func (c *CSV) SetHeader(row Row) {
+	c.header = row
+}
+
+func (c *CSV) AppendRow(row Row) {
+	c.rows = append(c.rows, row)
+}
+
+// Transform raw array to Row object
+func ToRow(data []string) Row {
+	row := Row{}
+
+	row.columns = append(row.columns, data...)
+
+	return row
 }
