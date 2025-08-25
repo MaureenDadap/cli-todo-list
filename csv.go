@@ -98,3 +98,7 @@ func ToRow(data []string) Row {
 
 	return row
 }
+
+func (c *CSV) GetTotalRows() int {
+	return len(c.rows)
+}
