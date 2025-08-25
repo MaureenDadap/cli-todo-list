@@ -90,6 +90,18 @@ func (c *CSV) AppendRow(row Row) {
 	c.rows = append(c.rows, row)
 }
 
+func (c *CSV) RawData() [][]string {
+	data := [][]string{}
+
+	data = append(data, c.header.columns)
+
+	for _, row := range c.rows {
+		data = append(data, row.columns)
+	}
+
+	return data
+}
+
 // Transform raw array to Row object
 func ToRow(data []string) Row {
 	row := Row{}
@@ -101,4 +113,13 @@ func ToRow(data []string) Row {
 
 func (c *CSV) GetTotalRows() int {
 	return len(c.rows)
+}
+
+func (c *CSV) SaveToFile(filename string) {
+	file := Must(os.Create(filename))
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+
+	CheckErr(writer.WriteAll(c.RawData()))
 }
